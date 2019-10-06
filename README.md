@@ -170,6 +170,23 @@ Creates one or more keys in the registry
 Deletes one or more keys in the registry
 **This operation will mutate the keys array**
 
+### regedit.deleteValue([String|Array], Function)
+Deletes one or more values in the registry
+**This operation will mutate the keys array**
+
+Here is an example (the last part of the path is the value to be deleted):
+```javascript
+var valuesToDelete = [
+    'HKCU\\Software\\MySoftware\\myValue1',
+    'HKCU\\Software\\MySoftware\\myValue2',
+    'HKCU\\Software\\MySoftware\\foo\\myValue1'
+]
+
+regedit.deleteValue(valuesToDelete, function(err) {
+
+})
+```
+
 ### regedit.putValue(Object, Function)
 Put one or more values in the registry. The Object given to this function is almost identical to the result of regedit.list(). 
 
@@ -204,6 +221,7 @@ Supported value types are:
 - REG_MULTI_SZ: an array of strings
 - REG_BINARY: an array of numbers (representing bytes)
 - REG_DEFAULT: see note about default values below
+- REG_NONE
 
 ##### Note about setting default values
 When including a default value in a putValue operation, one must use the REG_DEFAULT type. Further more, the name of the value is insignificant since in the registry the default value has no name, but because of the way the node and the vb processes communicate a name must be used. Please note that the only legal value type of a default value is REG_SZ
@@ -238,6 +256,3 @@ For now this is how its going to be, but in the future this will probably change
 ```
     set DEBUG=regedit
 ```
-
-## TODO
-deleteValue()
