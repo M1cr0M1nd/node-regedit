@@ -179,8 +179,10 @@ describe('regedit', function() {
 
 		it('will throw an error if we dont have permission', function(done) {
 			index.createKey('HKLM\\SECURITY\\unauthorized', function(err, result) {
-				err.should.be.an.Error
-				err.message.should.eql('access is denied')
+				if (err) {
+					err.should.be.an.Error
+					err.message.should.eql('access is denied')
+				}
 				done()
 			})
 		})
@@ -691,6 +693,204 @@ describe('regedit', function() {
 					type: 'reg_sz',
 					value: 'new\nline',
 				},
+			}
+		})
+
+		afterEach(function() {
+			now = Date.now().toString()
+		})
+	})
+
+	describe('delete values', function() {
+		const key = 'HKCU\\software\\ironSource\\regedit\\test\\'
+		let now = Date.now().toString()
+		let map = {}
+
+		it('will throw an error if we attempt to delete a value without permission', function(done) {
+			index.putValue({
+				'HKLM\\SECURITY\\': {
+					'unauthorized': {
+						type: 'REG_SZ',
+						value: 'some string',
+					}
+				}
+			}, function (err) {
+				if (err) {
+					return done(err)
+				}
+				index.deleteValue('HKLM\\SECURITY\\unauthorized', function(err) {
+					if (err) {
+						err.should.be.an.Error
+						err.message.should.eql('access is denied')
+					}
+					done()
+				})
+			})
+		})
+
+		it(key + now, function(done) {
+			index.putValue(map, function(err) {
+				if (err) {
+					return done(err)
+				}
+
+				index.list(key + now, function(err, result) {
+					if (err) {
+						return done(err)
+					}
+
+					result[key + now].values.should.containEql(map[key + now])
+
+					const valuesArray = Object.keys(result[key + now].values).map((value) => key + now + '\\' + value)
+
+					index.deleteValue(valuesArray, function(err) {
+						if (err) {
+							return done(err)
+						}
+
+						index.list(key + now, function(err, result1) {
+							if (err) {
+								return done(err)
+							}
+
+							result1.should.not.containEql(map[key + now])
+							done()
+						})
+					})
+				})
+			})
+		})
+
+		it(key + now + ' S', function(done) {
+			index.arch.putValue(map, function(err) {
+				if (err) {
+					return done(err)
+				}
+
+				index.arch.list(key + now, function(err, result) {
+					if (err) {
+						return done(err)
+					}
+
+					result[key + now].values.should.containEql(map[key + now])
+
+					const valuesArray = Object.keys(result[key + now].values).map((value) => key + now + '\\' + value)
+
+					index.arch.deleteValue(valuesArray, function(err) {
+						if (err) {
+							return done(err)
+						}
+
+						index.arch.list(key + now, function(err, result1) {
+							if (err) {
+								return done(err)
+							}
+
+							result1.should.not.containEql(map[key + now])
+							done()
+						})
+					})
+				})
+			})
+		})
+
+		it(key + now + ' 32bit', function(done) {
+			index.arch.putValue32(map, function(err) {
+				if (err) {
+					return done(err)
+				}
+
+				index.arch.list32(key + now, function(err, result) {
+					if (err) {
+						return done(err)
+					}
+
+					result[key + now].values.should.containEql(map[key + now])
+
+					const valuesArray = Object.keys(result[key + now].values).map((value) => key + now + '\\' + value)
+
+					index.arch.deleteValue32(valuesArray, function(err) {
+						if (err) {
+							return done(err)
+						}
+
+						index.arch.list32(key + now, function(err, result1) {
+							if (err) {
+								return done(err)
+							}
+
+							result1.should.not.containEql(map[key + now])
+							done()
+						})
+					})
+				})
+			})
+		})
+
+		it(key + now + ' 64bit', function(done) {
+			index.arch.putValue64(map, function(err) {
+				if (err) {
+					return done(err)
+				}
+
+				index.arch.list64(key + now, function(err, result) {
+					if (err) {
+						return done(err)
+					}
+
+					result[key + now].values.should.containEql(map[key + now])
+
+					const valuesArray = Object.keys(result[key + now].values).map((value) => key + now + '\\' + value)
+
+					index.arch.deleteValue64(valuesArray, function(err) {
+						if (err) {
+							return done(err)
+						}
+
+						index.arch.list64(key + now, function(err, result1) {
+							if (err) {
+								return done(err)
+							}
+
+							result1.should.not.containEql(map[key + now])
+							done()
+						})
+					})
+				})
+			})
+		})
+
+		beforeEach(function(done) {
+			index.createKey(key + now, done)
+			map[key + now] = {
+				'a': {
+					type: 'REG_SZ',
+					value: 'some string',
+				},
+				'b': {
+					type: 'REG_BINARY',
+					value: [1, 2, 3],
+				},
+				'c': {
+					type: 'REG_DWORD',
+					value: 10,
+				},
+				'd': {
+					type: 'REG_QWORD',
+					value: 100,
+				},
+				'e': {
+					type: 'REG_EXPAND_SZ',
+					value: 'expand_string',
+				},
+				'f': {
+					type: 'REG_MULTI_SZ',
+					value: ['a', 'b', 'c'],
+				},
+				'测试': {
+					type: 'REG_SZ',
+					value: '值 test for non-English environment',
+				}
 			}
 		})
 
